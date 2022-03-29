@@ -336,7 +336,6 @@ class AVLTreeList(object):
 
 	def isRightChild(self, node):  # Complexity - O(1) - access to a pointer
 		parent = node.parent
-		#  hiiiiiiiiiiiiiiiiiiii
 		return parent.right == node
 
 
