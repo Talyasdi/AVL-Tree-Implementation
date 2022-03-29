@@ -174,7 +174,55 @@ class AVLTreeList(object):
 	@rtype: list
 	@returns: the number of rebalancing operation due to AVL rebalancing
 	"""
-	def insert(self, i, val):
+	def insert(self, i, val): #not finished
+		new_node = AVLNode(val)
+		new_node.setHeight(0)#need to build func for update height
+		new_node.setSize(1)#need to build func for update size
+		left_son= AVLNode("None")
+		right_son=AVLNode("None")
+		new_node.setLeft(left_son)
+		new_node.setRight(right_son)
+		left_son.setParent(new_node)
+		right_son.setParent(new_node)
+		if i == self.length():
+			self.max.right =  new_node
+			self.max =  new_node
+		elif i<n:
+			current_node_in_i = self.treeSelect(i+1)
+			if not current_node_in_i.left.isRealNode():
+				current_node_in_i.setLeft(new_node)
+				new_node.setParent(current_node_in_i)
+			else:
+				pred_current_node_in_i = self.predeccesor(current_node_in_i)
+				pred_current_node_in_i.setRight(new_node)
+				new_node.setParent(pred_current_node_in_i)
+			if i == 0:
+				self.min = new_node
+		temp_node = new_node.parent
+		while temp_node.isRealNode():
+			temp_node.setSize(temp_node.getLeft().getSize()+temp_node.getRight().getSize()+1)
+			bf_temp_node = temp_node.getLeft().getHeight()-temp_node.getRight().getHeight()
+			old_height = temp_node.getHeight()
+			curr_new_height= max(temp_node.getLeft().getHeight(), temp_node.getRight().getHeight())+1
+			if abs(bf_temp_node)<2 and curr_new_height == old_height:
+				break
+			elif abs(bf_temp_node)<2:
+				temp_node.setHeight(curr_new_height)
+				temp_node = temp_node.parent
+			elif abs(bf_temp_node)==2:
+				rotate_and_fix()
+				break
+		while temp_node.isRealNode():
+			temp_node.setSize(temp_node.getLeft().getSize() + temp_node.getRight().getSize() + 1)
+			temp_node = temp_node.parent
+
+
+
+
+
+
+
+
 		return -1
 
 
@@ -308,8 +356,8 @@ class AVLTreeList(object):
 		"""
 
 	def successor(self, node):  # Complexity - O(logn) - linear in the height of the tree
-		#  if the node has a right child
 		curr_node = node.right
+		#  if the node has a right child
 		if curr_node.isRealNode:
 			if not curr_node.left.isRealNode:
 				return curr_node
@@ -326,6 +374,43 @@ class AVLTreeList(object):
 				curr_node = curr_node.parent
 
 			return curr_node.parent
+
+	"""Auxiliary Function - returns the node with rank(node) - 1 (the node at the previous index)
+
+			@rtype: AVLNode
+			@returns: the node at the previous index 
+
+			"""
+
+	def predeccesor(self, node):  # Complexity - O(logn) - linear in the height of the tree
+		curr_node = node.left
+		#  if the node has a left child
+		if curr_node.isRealNode:
+			if not curr_node.right.isRealNode:
+				return curr_node
+			else:
+				curr_node = curr_node.right
+				while curr_node.right.isRealNode:
+					curr_node = curr_node.right
+
+				return curr_node
+
+		# if the node does not have a left child
+		else:
+			while not self.isRightChild(curr_node):
+				curr_node = curr_node.parent
+
+			return curr_node.parent
+
+	"""Auxiliary Function - general rotate - checks which rotation needs to be made and calls it
+
+				@rtype: None
+			
+
+				"""
+
+	def rotate_and_fix(self, node):  # Complexity
+		return None
 
 	"""Auxiliary Function - returns true if the node is a right child of its parent
 	
