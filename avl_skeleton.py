@@ -175,9 +175,12 @@ class AVLTreeList(object):
 	@returns: the number of rebalancing operation due to AVL rebalancing
 	"""
 	def insert(self, i, val): #not finished
+		rebalanceOp = 0
+		# rightCase = False
+
 		new_node = AVLNode(val)
-		new_node.setHeight(0)#need to build func for update height
-		new_node.setSize(1)#need to build func for update size
+		new_node.setHeight(0)  #need to build func for update height
+		new_node.setSize(1)   #need to build func for update size
 		left_son= AVLNode("None")
 		right_son=AVLNode("None")
 		new_node.setLeft(left_son)
@@ -185,10 +188,10 @@ class AVLTreeList(object):
 		left_son.setParent(new_node)
 		right_son.setParent(new_node)
 		if i == self.length():
-			self.max.right =  new_node
-			self.max =  new_node
-		elif i<n:
-			current_node_in_i = self.treeSelect(i+1)
+			self.max.right = new_node
+			self.max = new_node
+		elif i < self.length():
+			current_node_in_i = self.treeSelect(self.root, i+1)
 			if not current_node_in_i.left.isRealNode():
 				current_node_in_i.setLeft(new_node)
 				new_node.setParent(current_node_in_i)
@@ -199,31 +202,28 @@ class AVLTreeList(object):
 			if i == 0:
 				self.min = new_node
 		temp_node = new_node.parent
+
 		while temp_node.isRealNode():
-			temp_node.setSize(temp_node.getLeft().getSize()+temp_node.getRight().getSize()+1)
-			bf_temp_node = temp_node.getLeft().getHeight()-temp_node.getRight().getHeight()
+			self.updateSize(temp_node)
+			bf_temp_node = self.balanceFactor(temp_node)
 			old_height = temp_node.getHeight()
-			curr_new_height= max(temp_node.getLeft().getHeight(), temp_node.getRight().getHeight())+1
-			if abs(bf_temp_node)<2 and curr_new_height == old_height:
+			curr_new_height = max(temp_node.getLeft().getHeight(), temp_node.getRight().getHeight())+1
+			if abs(bf_temp_node) < 2 and curr_new_height == old_height:
 				break
-			elif abs(bf_temp_node)<2:
+			elif abs(bf_temp_node) < 2:
 				temp_node.setHeight(curr_new_height)
+				rebalanceOp += 1
+				# rightCase = self.isRightChild(temp_node)
 				temp_node = temp_node.parent
-			elif abs(bf_temp_node)==2:
-				rotate_and_fix()
+			elif abs(bf_temp_node) == 2:
+				rebalanceOp += self.rotateAndFix(temp_node)
 				break
+
 		while temp_node.isRealNode():
-			temp_node.setSize(temp_node.getLeft().getSize() + temp_node.getRight().getSize() + 1)
+			self.updateSize(temp_node)
 			temp_node = temp_node.parent
 
-
-
-
-
-
-
-
-		return -1
+		return rebalanceOp
 
 
 	"""deletes the i'th item in the list
@@ -402,15 +402,93 @@ class AVLTreeList(object):
 
 			return curr_node.parent
 
+
+
 	"""Auxiliary Function - general rotate - checks which rotation needs to be made and calls it
 
-				@rtype: None
-			
+						@rtype: integer
+						@returns: number of rotations 
 
-				"""
+						"""
 
-	def rotate_and_fix(self, node):  # Complexity
-		return None
+	def rotateAndFix(self, node):  # Complexity
+		node_bf = self.balanceFactor(node)
+		"""
+		if isRightCase:
+			child_bf = self.balanceFactor(node.getRight())
+		else:
+			child_bf = self.balanceFactor(node.getLeft())
+		"""
+		if node_bf == 2:
+			left_child_bf = self.balanceFactor(node.getLeft())
+
+			# Right Rotation
+			if left_child_bf == 1 or left_child_bf == 0:
+				self.rotateRight(node)
+				return 1
+
+			# Left Then Right Rotation
+			else:
+				self.rotateLeft(node.getLeft())
+				self.rotateRight(node)
+				return 2
+
+		else:
+			right_child_bf = self.balanceFactor(node.getRight())
+
+			# Left Rotation
+			if right_child_bf == -1 or right_child_bf == 0:
+				self.rotateLeft(node)
+				return 1
+
+			# Right Then Left Rotation
+			else:
+				self.rotateRight(node.getRight())
+				self.rotateLeft(node)
+				return 2
+
+	"""Auxiliary Function - rotates right
+
+	  """
+
+	def rotateRight(self, parent):  # Complexity
+		isParentRightChild = self.isRightChild(parent)
+		child = parent.getLeft()
+		parent.setLeft(child.getRight())
+		parent.getLeft().setParent(parent)
+		child.setRight(parent)
+		child.setParent(parent.getParent())
+		if isParentRightChild:
+			child.getParent().setRight(child)
+		else:
+			child.getParent().setLeft(child)
+		parent.setParent(child)
+
+		self.updateSize(parent)
+		self.updateHeight(parent)
+		self.updateSize(child)
+		self.updateHeight(child)
+	"""Auxiliary Function - rotates left
+
+	"""
+
+	def rotateLeft(self, parent):  # Complexity
+		isParentRightChild = self.isRightChild(parent)
+		child = parent.getRight()
+		parent.setRight(child.getLeft())
+		parent.getRight().setParent(parent)
+		child.setLeft(parent)
+		child.setParent(parent.getParent())
+		if isParentRightChild:
+			child.getParent().setRight(child)
+		else:
+			child.getParent().setLeft(child)
+		parent.setParent(child)
+
+		self.updateSize(parent)
+		self.updateHeight(parent)
+		self.updateSize(child)
+		self.updateHeight(child)
 
 	"""Auxiliary Function - returns true if the node is a right child of its parent
 	
@@ -423,4 +501,24 @@ class AVLTreeList(object):
 		parent = node.parent
 		return parent.right == node
 
+	"""Auxiliary Function - calculates BF of a node
 
+					@rtype: integer
+					@returns: node's BF
+
+					"""
+	def balanceFactor(self, node):
+		return node.getLeft().getHeight() - node.getRight().getHeight()
+
+	"""Auxiliary Function - updates the size of a node
+	
+		"""
+	def updateSize(self, node):
+		node.setSize(node.getLeft().getSize()+node.getRight().getSize()+1)
+
+	"""Auxiliary Function - updates the height of a node
+
+		"""
+
+	def updateHeight(self, node):
+		max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1
