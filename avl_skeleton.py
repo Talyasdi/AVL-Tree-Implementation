@@ -6,13 +6,13 @@
 
 """A class represnting a node in an AVL tree"""
 
-
 class AVLNode(object):
-	"""Constructor, you are allowed to add more fields. 
+	"""Constructor, you are allowed to add more fields.
 
 	@type value: str
 	@param value: data of your node
 	"""
+
 	def __init__(self, value):
 		self.value = value
 		self.left = None
@@ -25,6 +25,7 @@ class AVLNode(object):
 	@rtype: AVLNode
 	@returns: the left child of self, None if there is no left child
 	"""
+
 	def getLeft(self):
 		return self.left
 
@@ -33,6 +34,7 @@ class AVLNode(object):
 	@rtype: AVLNode
 	@returns: the right child of self, None if there is no right child
 	"""
+
 	def getRight(self):
 		return self.right
 
@@ -41,6 +43,7 @@ class AVLNode(object):
 	@rtype: AVLNode
 	@returns: the parent of self, None if there is no parent
 	"""
+
 	def getParent(self):
 		return self.parent
 
@@ -49,6 +52,7 @@ class AVLNode(object):
 	@rtype: str
 	@returns: the value of self, None if the node is virtual
 	"""
+
 	def getValue(self):
 		return self.value
 
@@ -57,6 +61,7 @@ class AVLNode(object):
 	@rtype: int
 	@returns: the height of self, -1 if the node is virtual
 	"""
+
 	def getHeight(self):
 		return self.height
 
@@ -65,6 +70,7 @@ class AVLNode(object):
 	@type node: AVLNode
 	@param node: a node
 	"""
+
 	def setLeft(self, node):
 		self.left = node
 
@@ -73,6 +79,7 @@ class AVLNode(object):
 	@type node: AVLNode
 	@param node: a node
 	"""
+
 	def setRight(self, node):
 		self.right = node
 
@@ -81,6 +88,7 @@ class AVLNode(object):
 	@type node: AVLNode
 	@param node: a node
 	"""
+
 	def setParent(self, node):
 		self.parent = node
 
@@ -89,6 +97,7 @@ class AVLNode(object):
 	@type value: str
 	@param value: data
 	"""
+
 	def setValue(self, value):
 		self.value = value
 
@@ -97,6 +106,7 @@ class AVLNode(object):
 	@type h: int
 	@param h: the height
 	"""
+
 	def setHeight(self, h):
 		self.height = h
 
@@ -105,6 +115,7 @@ class AVLNode(object):
 	@rtype: bool
 	@returns: False if self is a virtual node, True otherwise.
 	"""
+
 	def isRealNode(self):
 		return self.height != -1
 
@@ -113,6 +124,7 @@ class AVLNode(object):
 	@type s: int
 	@param s: the size
 	"""
+
 	def setSize(self, s):
 		self.size = s
 
@@ -121,6 +133,7 @@ class AVLNode(object):
 	@rtype: int
 	@returns: the size of self, 0 if the node is virtual
 	"""
+
 	def getSize(self):
 		return self.size
 
@@ -131,11 +144,11 @@ A class implementing the ADT list, using an AVL tree.
 
 
 class AVLTreeList(object):
-
 	"""
 	Constructor, you are allowed to add more fields.
 
 	"""
+
 	def __init__(self):
 		virtualNode = AVLNode("None")  # Empty list contains only one virtual node
 		self.root = virtualNode
@@ -147,6 +160,7 @@ class AVLTreeList(object):
 	@rtype: bool
 	@returns: True if the list is empty, False otherwise
 	"""
+
 	def empty(self):  # Complexity - O(1) - Access to a pointer and comparison
 		return self.root.height == -1
 
@@ -158,11 +172,12 @@ class AVLTreeList(object):
 	@rtype: str
 	@returns: the the value of the i'th item in the list
 	"""
+
 	def retrieve(self, i):  # Complexity - O(logn)
 		if self.root.size <= i or i < 0:  # Complexity - O(1) - access to a pointer
 			return None
 
-		return (self.treeSelect(self.root, i+1)).value  # Complexity - O(logn)
+		return (self.treeSelect(self.root, i + 1)).value  # Complexity - O(logn)
 
 	"""inserts val at position i in the list
 
@@ -174,24 +189,35 @@ class AVLTreeList(object):
 	@rtype: list
 	@returns: the number of rebalancing operation due to AVL rebalancing
 	"""
-	def insert(self, i, val): #not finished
+
+	def insert(self, i, val):  # not finished
 		rebalanceOp = 0
 		# rightCase = False
 
 		new_node = AVLNode(val)
-		new_node.setHeight(0)  #need to build func for update height
-		new_node.setSize(1)   #need to build func for update size
-		left_son= AVLNode("None")
-		right_son=AVLNode("None")
+		new_node.setHeight(0)  # need to build func for update height
+		new_node.setSize(1)  # need to build func for update size
+		left_son = AVLNode("None")
+		right_son = AVLNode("None")
 		new_node.setLeft(left_son)
 		new_node.setRight(right_son)
 		left_son.setParent(new_node)
 		right_son.setParent(new_node)
+
+		if self.empty():
+			self.root.setLeft(new_node)
+			new_node.setParent(self.root)
+			self.root = new_node
+			self.min = new_node
+			self.max = new_node
+			return
+
 		if i == self.length():
 			self.max.right = new_node
+			new_node.setParent(self.max)
 			self.max = new_node
 		elif i < self.length():
-			current_node_in_i = self.treeSelect(self.root, i+1)
+			current_node_in_i = self.treeSelect(self.root, i + 1)
 			if not current_node_in_i.left.isRealNode():
 				current_node_in_i.setLeft(new_node)
 				new_node.setParent(current_node_in_i)
@@ -207,7 +233,7 @@ class AVLTreeList(object):
 			self.updateSize(temp_node)
 			bf_temp_node = self.balanceFactor(temp_node)
 			old_height = temp_node.getHeight()
-			curr_new_height = max(temp_node.getLeft().getHeight(), temp_node.getRight().getHeight())+1
+			curr_new_height = max(temp_node.getLeft().getHeight(), temp_node.getRight().getHeight()) + 1
 			if abs(bf_temp_node) < 2 and curr_new_height == old_height:
 				break
 			elif abs(bf_temp_node) < 2:
@@ -225,7 +251,6 @@ class AVLTreeList(object):
 
 		return rebalanceOp
 
-
 	"""deletes the i'th item in the list
 
 	@type i: int
@@ -234,6 +259,7 @@ class AVLTreeList(object):
 	@rtype: int
 	@returns: the number of rebalancing operation due to AVL rebalancing
 	"""
+
 	def delete(self, i):
 		return -1
 
@@ -242,6 +268,7 @@ class AVLTreeList(object):
 	@rtype: str
 	@returns: the value of the first item, None if the list is empty
 	"""
+
 	def first(self):  # Complexity - O(1)
 		if self.empty():  # Complexity - O(1)
 			return None
@@ -253,6 +280,7 @@ class AVLTreeList(object):
 	@rtype: str
 	@returns: the value of the last item, None if the list is empty
 	"""
+
 	def last(self):  # Complexity - O(1)
 		if self.empty():  # Complexity - O(1)
 			return None
@@ -264,6 +292,7 @@ class AVLTreeList(object):
 	@rtype: list
 	@returns: a list of strings representing the data structure
 	"""
+
 	def listToArray(self):
 		res_array = []
 		curr_node = self.min
@@ -278,6 +307,7 @@ class AVLTreeList(object):
 	@rtype: int
 	@returns: the size of the list
 	"""
+
 	def length(self):  # Complexity - O(1) - Access to a pointer
 		return self.root.size  # if list is empty - root size is 0
 
@@ -290,6 +320,7 @@ class AVLTreeList(object):
 	@returns: a list [left, val, right], where left is an AVLTreeList representing the list until index i-1,
 	right is an AVLTreeList representing the list from index i+1, and val is the value at the i'th index.
 	"""
+
 	def split(self, i):
 		return None
 
@@ -300,6 +331,7 @@ class AVLTreeList(object):
 	@rtype: int
 	@returns: the absolute value of the difference between the height of the AVL trees joined
 	"""
+
 	def concat(self, lst):
 		return None
 
@@ -310,7 +342,9 @@ class AVLTreeList(object):
 	@rtype: int
 	@returns: the first index that contains val, -1 if not found.
 	"""
-	def search(self, val):  # Complexity - O(n) - we go through each edge twice at most (based on recitation - proof at documentary file)
+
+	def search(self,
+			   val):  # Complexity - O(n) - we go through each edge twice at most (based on recitation - proof at documentary file)
 		curr_node = self.min
 		index = 0
 		while curr_node != self.max:
@@ -329,11 +363,12 @@ class AVLTreeList(object):
 	@rtype: AVLNode
 	@returns: the root, None if the list is empty
 	"""
+
 	def getRoot(self):
 		return None
 
 	"""Auxiliary Function - returns the node with rank k (the node at index k-1)
-	
+
 	@rtype: AVLNode
 	@returns: the node with rank k
 	@precondition:  1 <= k <= self.length
@@ -352,18 +387,18 @@ class AVLTreeList(object):
 
 		@rtype: AVLNode
 		@returns: the node at the next index 
-	
+
 		"""
 
 	def successor(self, node):  # Complexity - O(logn) - linear in the height of the tree
 		curr_node = node.right
 		#  if the node has a right child
-		if curr_node.isRealNode:
-			if not curr_node.left.isRealNode:
+		if curr_node.isRealNode():
+			if not curr_node.left.isRealNode():
 				return curr_node
 			else:
 				curr_node = curr_node.left
-				while curr_node.left.isRealNode:
+				while curr_node.left.isRealNode():
 					curr_node = curr_node.left
 
 				return curr_node
@@ -385,12 +420,12 @@ class AVLTreeList(object):
 	def predeccesor(self, node):  # Complexity - O(logn) - linear in the height of the tree
 		curr_node = node.left
 		#  if the node has a left child
-		if curr_node.isRealNode:
-			if not curr_node.right.isRealNode:
+		if curr_node.isRealNode():
+			if not curr_node.right.isRealNode():
 				return curr_node
 			else:
 				curr_node = curr_node.right
-				while curr_node.right.isRealNode:
+				while curr_node.right.isRealNode():
 					curr_node = curr_node.right
 
 				return curr_node
@@ -401,8 +436,6 @@ class AVLTreeList(object):
 				curr_node = curr_node.parent
 
 			return curr_node.parent
-
-
 
 	"""Auxiliary Function - general rotate - checks which rotation needs to be made and calls it
 
@@ -464,10 +497,14 @@ class AVLTreeList(object):
 			child.getParent().setLeft(child)
 		parent.setParent(child)
 
+		if self.root == parent:
+			self.root = child
+
 		self.updateSize(parent)
 		self.updateHeight(parent)
 		self.updateSize(child)
 		self.updateHeight(child)
+
 	"""Auxiliary Function - rotates left
 
 	"""
@@ -485,16 +522,19 @@ class AVLTreeList(object):
 			child.getParent().setLeft(child)
 		parent.setParent(child)
 
+		if self.root == parent:
+			self.root = child
+
 		self.updateSize(parent)
 		self.updateHeight(parent)
 		self.updateSize(child)
 		self.updateHeight(child)
 
 	"""Auxiliary Function - returns true if the node is a right child of its parent
-	
+
 			@rtype: boolean value
 			@returns: true if the node is a right child of its parent
-	
+
 			"""
 
 	def isRightChild(self, node):  # Complexity - O(1) - access to a pointer
@@ -507,14 +547,16 @@ class AVLTreeList(object):
 					@returns: node's BF
 
 					"""
+
 	def balanceFactor(self, node):
 		return node.getLeft().getHeight() - node.getRight().getHeight()
 
 	"""Auxiliary Function - updates the size of a node
-	
+
 		"""
+
 	def updateSize(self, node):
-		node.setSize(node.getLeft().getSize()+node.getRight().getSize()+1)
+		node.setSize(node.getLeft().getSize() + node.getRight().getSize() + 1)
 
 	"""Auxiliary Function - updates the height of a node
 
