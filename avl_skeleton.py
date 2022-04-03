@@ -113,7 +113,7 @@ class AVLNode(object):
 	"""returns whether self is not a virtual node 
 
 	@rtype: bool
-	@returns: False if self is a virtual node, True otherwise.
+	@returns: False if self is a virtual node, True otherise.
 	"""
 
 	def isRealNode(self):
@@ -261,7 +261,76 @@ class AVLTreeList(object):
 	"""
 
 	def delete(self, i):
-		return -1
+		rebalanceOp = 0
+		node_to_delete = self.treeSelect(self.root, i+1)
+		left_child = node_to_delete.getLeft()
+		right_child = node_to_delete.getRight()
+
+		# checks if we deleted min
+		if i == 0 and self.length() > 1:
+			self.min = self.successor(node_to_delete)
+
+		# checks if we deleted max
+		if i == self.length()-1 and self.length() > 1:
+			self.max = self.predeccesor(node_to_delete)
+
+		# if node_to_delete is a leaf
+		if node_to_delete.getSize() == 1:
+			# if the tree has only one node (we deleted the root)
+			if node_to_delete == self.root:
+				node_to_delete.getParent().setRight(None)
+				node_to_delete.getParent().setLeft(None)
+				self.root = node_to_delete.getParent()
+				self.min = node_to_delete.getParent()
+				self.max = node_to_delete.getParent()
+				parent_node = node_to_delete.getParent()
+			else:
+				parent_node = self.deleteLeaf(node_to_delete)
+
+		# if node_to_delete has one child
+		elif (left_child.isRealNode() and (not right_child.isRealNode())) or (right_child.isRealNode() and (not left_child.isRealNode())):
+			parent_node = self.deleteNodeWithOneChild(node_to_delete)
+			# if we deleted the root
+			if not parent_node.isRealNode():
+				if parent_node.getLeft().isRealNode():
+					self.root = parent_node.getLeft()
+					self.min = parent_node.getLeft()
+					self.max = parent_node.getLeft()
+				else:
+					self.root = parent_node.getRight()
+					self.min = parent_node.getRight()
+					self.max = parent_node.getRight()
+
+		# if node_to_delete has to children
+		else:
+			parent_node = self.deleteNodeWithTwoChildren(node_to_delete)
+			# if we deleted the root
+			if not parent_node.isRealNode():
+				if parent_node.getLeft().isRealNode():
+					self.root = parent_node.getLeft()
+				else:
+					self.root = parent_node.getRight()
+
+		while parent_node.isRealNode():
+			self.updateSize(parent_node)
+			bf_parent_node = self.balanceFactor(parent_node)
+			old_height = parent_node.getHeight()
+			curr_new_height = max(parent_node.getLeft().getHeight(), parent_node.getRight().getHeight()) + 1
+			if abs(bf_parent_node) < 2 and curr_new_height == old_height:
+				break
+			elif abs(bf_parent_node) < 2:
+				parent_node.setHeight(curr_new_height)
+				rebalanceOp += 1
+				parent_node = parent_node.parent
+			elif abs(bf_parent_node) == 2:
+				rebalanceOp += self.rotateAndFix(parent_node)
+				parent_node = parent_node.parent
+
+		while parent_node.isRealNode():
+			self.updateSize(parent_node)
+			parent_node = parent_node.parent
+
+		return rebalanceOp
 
 	"""returns the value of the first item in the list
 
@@ -564,3 +633,71 @@ class AVLTreeList(object):
 
 	def updateHeight(self, node):
 		max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1
+
+	"""Auxiliary Function - deletes the leaf it gets
+
+				@rtype: AVLNode
+				@returns: the AVLNode from which the node has physically changed
+
+			"""
+	def deleteLeaf(self, node_to_delete):  # Complexity
+		if self.isRightChild(node_to_delete):
+			node_to_delete.getParent().setRight(node_to_delete.getRight())
+			node_to_delete.getRight().setParent(node_to_delete.getParent())
+		else:
+			node_to_delete.getParent().setLeft(node_to_delete.getLeft())
+			node_to_delete.getLeft().setParent(node_to_delete.getParent())
+
+		return node_to_delete.getParent()
+
+	"""Auxiliary Function - deletes the node it gets
+
+				@rtype: AVLNode
+				@returns: the AVLNode from which the node has physically changed
+
+			"""
+	def deleteNodeWithOneChild(self, node_to_delete):  # Complexity
+		# if node_to_delete has only right child
+		if node_to_delete.getRight().isRealNode() and (not node_to_delete.getLeft().isRealNode()):
+			if self.isRightChild(node_to_delete):
+				node_to_delete.getParent().setRight(node_to_delete.getRight())
+			else:
+				node_to_delete.getParent().setLeft(node_to_delete.getRight())
+				node_to_delete.getRight().setParent(node_to_delete.getParent())
+
+		# if node_to_delete has only left child
+		elif (not node_to_delete.getRight().isRealNode()) and node_to_delete.getLeft().isRealNode():
+			if self.isRightChild(node_to_delete):
+				node_to_delete.getParent().setRight(node_to_delete.getLeft())
+			else:
+				node_to_delete.getParent().setLeft(node_to_delete.getLeft())
+			node_to_delete.getLeft().setParent(node_to_delete.getParent())
+
+		return node_to_delete.getParent()
+
+	"""Auxiliary Function - deletes the node it gets
+
+					@rtype: AVLNode
+					@returns: the AVLNode from which the node has physically changed
+
+				"""
+	def deleteNodeWithTwoChildren(self, node_to_delete):  # Complexity
+		successor_to_delete = self.successor(node_to_delete)
+		if successor_to_delete.getSize() == 1:
+			parent_of_successor = self.deleteLeaf(successor_to_delete)
+
+		else:
+			parent_of_successor = self.deleteNodeWithOneChild(successor_to_delete)
+
+		if self.isRightChild(node_to_delete):
+			node_to_delete.getParent().setRight(successor_to_delete)
+		else:
+			node_to_delete.getParent().setLeft(successor_to_delete)
+		successor_to_delete.setParent(node_to_delete.getParent())
+
+		successor_to_delete.setRight(node_to_delete.getRight())
+		node_to_delete.getRight().setParent(successor_to_delete)
+		successor_to_delete.setLeft(node_to_delete.getLeft())
+		node_to_delete.getLeft().setParent(successor_to_delete)
+		return parent_of_successor
+
