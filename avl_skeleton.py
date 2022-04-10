@@ -391,7 +391,45 @@ class AVLTreeList(object):
 	"""
 
 	def split(self, i):
-		return None
+		tree1 = AVLTreeList()
+		tree2 = AVLTreeList()
+
+		if i == 0:
+			self.delete(i)
+			tree2 = self
+		elif i == self.length()-1:
+			self.delete(i)
+			tree1 = self
+		else:
+			split_node = self.treeSelect(i+1)
+			min_tree1 = self.min
+			max_tree1 = self.predeccesor(split_node)
+			min_tree2 = self.successor(split_node)
+			max_tree2 = self.max
+
+			# if split_node has left child
+			if split_node.getLeft().isRealNode():
+				tree1.getRoot().setLeft(split_node.getLeft())
+				split_node.getLeft().setParent(tree1.getRoot())
+				tree1.root = split_node.getLeft()
+
+			# if split_node has right child
+			if split_node.getRight().isRealNode():
+				tree2.getRoot().setLeft(split_node.getRight())
+				split_node.getRight().setParent(tree2.getRoot())
+				tree2.root = split_node.getRight()
+
+			# disconnect split_node from his children and his parent after saving his parent
+			split_node.setRight(None)
+			split_node.setLeft(None)
+			is_right_child = self.isRightChild(split_node)
+			curr_node = split_node.getParent()
+			split_node.setParent(None)
+
+			help_tree1 = AVLTreeList()
+			help_tree2 = AVLTreeList()
+			while curr_node.isRealNode():
+
 
 	"""concatenates lst to self
 
@@ -402,7 +440,16 @@ class AVLTreeList(object):
 	"""
 
 	def concat(self, lst):
-		return None
+		new_max = lst.max
+		height_diff = abs(self.getRoot().getHeight() - lst.getRoot().getHeight())
+		max_node = self.max
+		self.delete(self.length()-1)
+		joined_tree = self.join(self, max_node, lst)
+		self.root = joined_tree.getRoot()
+		self.max = new_max
+		# lst.root ------------------------------------------ complete
+		return height_diff
+
 
 	"""searches for a *value* in the list
 
@@ -412,8 +459,7 @@ class AVLTreeList(object):
 	@returns: the first index that contains val, -1 if not found.
 	"""
 
-	def search(self,
-			   val):  # Complexity - O(n) - we go through each edge twice at most (based on recitation - proof at documentary file)
+	def search(self, val):  # Complexity - O(n) - we go through each edge twice at most (based on recitation - proof at documentary file)
 		curr_node = self.min
 		index = 0
 		while curr_node != self.max:
@@ -434,7 +480,7 @@ class AVLTreeList(object):
 	"""
 
 	def getRoot(self):
-		return None
+		return self.root
 
 	"""Auxiliary Function - returns the node with rank k (the node at index k-1)
 
@@ -632,7 +678,7 @@ class AVLTreeList(object):
 		"""
 
 	def updateHeight(self, node):
-		max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1
+		node.setHeight(max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1)
 
 	"""Auxiliary Function - deletes the leaf it gets
 
@@ -700,4 +746,97 @@ class AVLTreeList(object):
 		successor_to_delete.setLeft(node_to_delete.getLeft())
 		node_to_delete.getLeft().setParent(successor_to_delete)
 		return parent_of_successor
+
+	"""Auxiliary Function - joins two trees with a connecting node 
+						@rtype: AVLTree
+						@returns: the AVLTree after joining two trees
+
+					"""
+
+	def join(self, connecting_node, tree):  # Complexity
+		return_tree = AVLTreeList()
+
+		# if two trees have the same height
+		if self.getRoot().getHeight() == tree.getRoot().getHeight():
+			connecting_node.setLeft(self.getRoot())
+			connecting_node.setRight(tree.getRoot())
+			self.getRoot().setParent(connecting_node)
+			tree.getRoot().setParent(connecting_node)
+			connecting_node.setParent(return_tree.getRoot())
+			return_tree.getRoot().setLeft(connecting_node)
+			return_tree.root = connecting_node
+			return_tree.updateSize(return_tree.getRoot())
+			return_tree.updateHeight(return_tree.getRoot())
+
+		else:
+			if self.getRoot().getHeight() > tree.getRoot().getHeight():
+				higher_tree = self
+				lower_tree_height = tree.getRoot().getHeight()
+
+				# linking connecting_node to shorter tree
+				connecting_node.setRight(tree.getRoot())
+				if tree.isRightChild(tree.getRoot()):
+					tree.getRoot().getParent().setRight(None)
+				else:
+					tree.getRoot().getParent().setLeft(None)
+				tree.getRoot().setParent(connecting_node)
+
+				# finding the left child of connecting_node
+				curr_node = higher_tree.getRoot()
+				while curr_node.getHeight() > lower_tree_height:
+					curr_node = curr_node.getRight()
+
+				# linking connecting_node to higher tree
+				connecting_node.setParent(curr_node.getParent())
+				curr_node.getParent().setRight(connecting_node)
+				connecting_node.setLeft(curr_node)
+				curr_node.setParent(connecting_node)
+			else:
+				higher_tree = tree
+				lower_tree_height = self.getRoot().getHeight()
+
+				# linking connecting_node to shorter tree
+				connecting_node.setLeft(self.getRoot())
+				if self.isRightChild(self.getRoot()):
+					self.getRoot().getParent().setRight(None)
+				else:
+					self.getRoot().getParent().setLeft(None)
+				self.getRoot().setParent(connecting_node)
+
+				# finding the right child of connecting_node
+				curr_node = higher_tree.getRoot()
+				while curr_node.getHeight() > lower_tree_height:
+					curr_node = curr_node.getLeft()
+
+				# linking connecting_node to higher tree
+				connecting_node.setParent(curr_node.getParent())
+				curr_node.getParent().setLeft(connecting_node)
+				connecting_node.setRight(curr_node)
+				curr_node.setParent(connecting_node)
+
+			self.updateSize(connecting_node)
+			self.updateHeight(connecting_node)
+
+			parent_node = connecting_node.getParent()
+			while parent_node.isRealNode():
+				self.updateSize(parent_node)
+				bf_parent_node = self.balanceFactor(parent_node)
+				old_height = parent_node.getHeight()
+				curr_new_height = max(parent_node.getLeft().getHeight(), parent_node.getRight().getHeight()) + 1
+				if abs(bf_parent_node) < 2 and curr_new_height == old_height:
+					break
+				elif abs(bf_parent_node) < 2:
+					parent_node.setHeight(curr_new_height)
+					parent_node = parent_node.parent
+				elif abs(bf_parent_node) == 2:
+					self.rotateAndFix(parent_node)
+					parent_node = parent_node.parent
+
+			while parent_node.isRealNode():
+				self.updateSize(parent_node)
+				parent_node = parent_node.parent
+
+			return_tree.root = higher_tree.root
+
+		return return_tree
 
