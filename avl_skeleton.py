@@ -394,14 +394,18 @@ class AVLTreeList(object):
 		tree1 = AVLTreeList()
 		tree2 = AVLTreeList()
 
+
 		if i == 0:
+			split_node_val = self.min.value
 			self.delete(i)
 			tree2 = self
 		elif i == self.length()-1:
+			split_node_val =self.max.value
 			self.delete(i)
 			tree1 = self
 		else:
 			split_node = self.treeSelect(i+1)
+			split_node_val = split_node.value
 			min_tree1 = self.min
 			max_tree1 = self.predeccesor(split_node)
 			min_tree2 = self.successor(split_node)
@@ -426,9 +430,39 @@ class AVLTreeList(object):
 			curr_node = split_node.getParent()
 			split_node.setParent(None)
 
-			help_tree1 = AVLTreeList()
-			help_tree2 = AVLTreeList()
+
+
 			while curr_node.isRealNode():
+				if is_right_child:
+					help_tree1 = AVLTreeList()
+					if curr_node.getLeft().isRealNode():
+						help_tree1.getRoot().setLeft(curr_node.getLeft())
+						curr_node.getLeft().setParent(help_tree1.getRoot())
+						help_tree1.root = curr_node.getLeft()
+					else:
+						curr_node.getLeft().setParent(None)
+					tree1 = self.join(help_tree1,curr_node,tree1)
+				else:
+					help_tree2 = AVLTreeList()
+					if curr_node.getRight().isRealNode():
+						help_tree2.getRoot().setLeft(curr_node.getRight())
+						curr_node.getRight().setParent(help_tree2.getRoot())
+						help_tree2.root = curr_node.getRight()
+					else:
+						curr_node.getRight().setParent(None)
+					tree2 = self.join(tree2,curr_node,help_tree2)
+
+				is_right_child = self.isRightChild(curr_node)
+				curr_node = curr_node.getParent()
+
+			curr_node.setRight(None)
+			curr_node.setLeft(None)
+			tree1.min = min_tree1
+			tree1.max = max_tree1
+			tree2.min = min_tree2
+			tree2.max = max_tree2
+
+			return [tree1,split_node_val, tree2]
 
 
 	"""concatenates lst to self
@@ -447,7 +481,9 @@ class AVLTreeList(object):
 		joined_tree = self.join(self, max_node, lst)
 		self.root = joined_tree.getRoot()
 		self.max = new_max
-		# lst.root ------------------------------------------ complete
+		# lst.root = None
+		# lst.min = None
+		# lst.max = None
 		return height_diff
 
 
@@ -774,11 +810,13 @@ class AVLTreeList(object):
 				lower_tree_height = tree.getRoot().getHeight()
 
 				# linking connecting_node to shorter tree
+
 				connecting_node.setRight(tree.getRoot())
-				if tree.isRightChild(tree.getRoot()):
-					tree.getRoot().getParent().setRight(None)
-				else:
-					tree.getRoot().getParent().setLeft(None)
+				if not tree.empty():
+					if tree.isRightChild(tree.getRoot()):
+						tree.getRoot().getParent().setRight(None)
+					else:
+						tree.getRoot().getParent().setLeft(None)
 				tree.getRoot().setParent(connecting_node)
 
 				# finding the left child of connecting_node
@@ -797,10 +835,11 @@ class AVLTreeList(object):
 
 				# linking connecting_node to shorter tree
 				connecting_node.setLeft(self.getRoot())
-				if self.isRightChild(self.getRoot()):
-					self.getRoot().getParent().setRight(None)
-				else:
-					self.getRoot().getParent().setLeft(None)
+				if not self.empty():
+					if self.isRightChild(self.getRoot()):
+						self.getRoot().getParent().setRight(None)
+					else:
+						self.getRoot().getParent().setLeft(None)
 				self.getRoot().setParent(connecting_node)
 
 				# finding the right child of connecting_node
@@ -829,11 +868,11 @@ class AVLTreeList(object):
 					parent_node.setHeight(curr_new_height)
 					parent_node = parent_node.parent
 				elif abs(bf_parent_node) == 2:
-					self.rotateAndFix(parent_node)
+					higher_tree.rotateAndFix(parent_node)
 					parent_node = parent_node.parent
 
 			while parent_node.isRealNode():
-				self.updateSize(parent_node)
+				higher_tree.updateSize(parent_node)
 				parent_node = parent_node.parent
 
 			return_tree.root = higher_tree.root
