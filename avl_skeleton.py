@@ -4,6 +4,7 @@
 #id2      - 207188285
 #name2    - Meital Shpigel
 
+
 """A class represnting a node in an AVL tree"""
 
 class AVLNode(object):
@@ -262,7 +263,9 @@ class AVLTreeList(object):
 
 	def delete(self, i):
 		rebalanceOp = 0
+		is_two_children = False
 		node_to_delete = self.treeSelect(self.root, i+1)
+		node_to_delete_height = node_to_delete.getHeight()
 		left_child = node_to_delete.getLeft()
 		right_child = node_to_delete.getRight()
 
@@ -301,9 +304,10 @@ class AVLTreeList(object):
 					self.min = parent_node.getRight()
 					self.max = parent_node.getRight()
 
-		# if node_to_delete has to children
+		# if node_to_delete has two children
 		else:
 			parent_node = self.deleteNodeWithTwoChildren(node_to_delete)
+			is_two_children = True
 			# if we deleted the root
 			if not parent_node.isRealNode():
 				if parent_node.getLeft().isRealNode():
@@ -314,7 +318,11 @@ class AVLTreeList(object):
 		while parent_node.isRealNode():
 			self.updateSize(parent_node)
 			bf_parent_node = self.balanceFactor(parent_node)
-			old_height = parent_node.getHeight()
+			if is_two_children:
+				old_height = node_to_delete_height
+				is_two_children = False
+			else:
+				old_height = parent_node.getHeight()
 			curr_new_height = max(parent_node.getLeft().getHeight(), parent_node.getRight().getHeight()) + 1
 			if abs(bf_parent_node) < 2 and curr_new_height == old_height:
 				break
@@ -324,9 +332,10 @@ class AVLTreeList(object):
 				parent_node = parent_node.parent
 			elif abs(bf_parent_node) == 2:
 				rebalanceOp += self.rotateAndFix(parent_node)
-				parent_node = parent_node.parent
+				parent_node = parent_node.parent.parent
 
 		while parent_node.isRealNode():
+			self.updateHeight(parent_node)
 			self.updateSize(parent_node)
 			parent_node = parent_node.parent
 
@@ -364,6 +373,8 @@ class AVLTreeList(object):
 
 	def listToArray(self):
 		res_array = []
+		if self.empty():
+			return res_array
 		curr_node = self.min
 		while curr_node != self.max:
 			res_array.append(curr_node.value)
@@ -404,7 +415,7 @@ class AVLTreeList(object):
 			self.delete(i)
 			tree1 = self
 		else:
-			split_node = self.treeSelect(i+1)
+			split_node = self.treeSelect(self.getRoot(), i+1)
 			split_node_val = split_node.value
 			min_tree1 = self.min
 			max_tree1 = self.predeccesor(split_node)
@@ -441,7 +452,7 @@ class AVLTreeList(object):
 						help_tree1.root = curr_node.getLeft()
 					else:
 						curr_node.getLeft().setParent(None)
-					tree1 = self.join(help_tree1,curr_node,tree1)
+					tree1 = help_tree1.join(curr_node,tree1)
 				else:
 					help_tree2 = AVLTreeList()
 					if curr_node.getRight().isRealNode():
@@ -450,7 +461,7 @@ class AVLTreeList(object):
 						help_tree2.root = curr_node.getRight()
 					else:
 						curr_node.getRight().setParent(None)
-					tree2 = self.join(tree2,curr_node,help_tree2)
+					tree2 = tree2.join(curr_node,help_tree2)
 
 				is_right_child = self.isRightChild(curr_node)
 				curr_node = curr_node.getParent()
@@ -478,7 +489,7 @@ class AVLTreeList(object):
 		height_diff = abs(self.getRoot().getHeight() - lst.getRoot().getHeight())
 		max_node = self.max
 		self.delete(self.length()-1)
-		joined_tree = self.join(self, max_node, lst)
+		joined_tree = self.join(max_node, lst)
 		self.root = joined_tree.getRoot()
 		self.max = new_max
 		# lst.root = None
@@ -723,6 +734,7 @@ class AVLTreeList(object):
 
 			"""
 	def deleteLeaf(self, node_to_delete):  # Complexity
+		parent_res = node_to_delete.getParent()
 		if self.isRightChild(node_to_delete):
 			node_to_delete.getParent().setRight(node_to_delete.getRight())
 			node_to_delete.getRight().setParent(node_to_delete.getParent())
@@ -730,7 +742,10 @@ class AVLTreeList(object):
 			node_to_delete.getParent().setLeft(node_to_delete.getLeft())
 			node_to_delete.getLeft().setParent(node_to_delete.getParent())
 
-		return node_to_delete.getParent()
+		node_to_delete.setParent(None)
+		node_to_delete.setRight(None)
+		node_to_delete.setLeft(None)
+		return parent_res
 
 	"""Auxiliary Function - deletes the node it gets
 
@@ -745,7 +760,7 @@ class AVLTreeList(object):
 				node_to_delete.getParent().setRight(node_to_delete.getRight())
 			else:
 				node_to_delete.getParent().setLeft(node_to_delete.getRight())
-				node_to_delete.getRight().setParent(node_to_delete.getParent())
+			node_to_delete.getRight().setParent(node_to_delete.getParent())
 
 		# if node_to_delete has only left child
 		elif (not node_to_delete.getRight().isRealNode()) and node_to_delete.getLeft().isRealNode():
@@ -781,6 +796,16 @@ class AVLTreeList(object):
 		node_to_delete.getRight().setParent(successor_to_delete)
 		successor_to_delete.setLeft(node_to_delete.getLeft())
 		node_to_delete.getLeft().setParent(successor_to_delete)
+
+		if parent_of_successor == node_to_delete:
+			parent_of_successor = successor_to_delete
+
+		if node_to_delete == self.getRoot():
+			self.root = successor_to_delete
+
+		node_to_delete.setParent(None)
+		node_to_delete.setRight(None)
+		node_to_delete.setLeft(None)
 		return parent_of_successor
 
 	"""Auxiliary Function - joins two trees with a connecting node 
@@ -878,4 +903,3 @@ class AVLTreeList(object):
 			return_tree.root = higher_tree.root
 
 		return return_tree
-
