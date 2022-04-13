@@ -385,6 +385,8 @@ class AVLTreeList(object):
 
 	def listToArray(self):
 		res_array = []
+		if self.empty():
+			return res_array
 		curr_node = self.min
 		while curr_node != self.max:
 			res_array.append(curr_node.value)
