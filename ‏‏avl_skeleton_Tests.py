@@ -318,7 +318,6 @@ class AVLTreeList(object):
 		# if node_to_delete has two children
 		else:
 			parent_node = self.deleteNodeWithTwoChildren(node_to_delete)
-			print("parent of node with two children is: " , parent_node.value)
 			is_two_children = True
 			# if we deleted the root
 			if not parent_node.isRealNode():
@@ -501,7 +500,7 @@ class AVLTreeList(object):
 		height_diff = abs(self.getRoot().getHeight() - lst.getRoot().getHeight())
 		max_node = self.max
 		self.delete(self.length()-1)
-		joined_tree = self.join(self, max_node, lst)
+		joined_tree = self.join(max_node, lst)
 		self.root = joined_tree.getRoot()
 		self.max = new_max
 		# lst.root = None
@@ -1135,9 +1134,9 @@ class AVLTreeList(object):
 class tests2:
 	@staticmethod
 	def insertest(tree):
-		for i in range(30):
-			# index = random.randint(0, tree.length())
-			tree.insert(i, str(i))
+		for i in range(50):
+			index = random.randint(0, tree.length())
+			tree.insert(index, str(index))
 
 	@staticmethod
 	def printush(tree):
@@ -1150,7 +1149,6 @@ class tests2:
 	def deltest(tree):
 		for i in range(25):
 			index = random.randint(0, tree.length()-1)
-			print("deleting: ", (tree.treeSelect( tree.getRoot(),index+1)).value + "at index:", index)
 			tree.delete(index)
 			tests2.printush(tree)
 
@@ -1184,10 +1182,9 @@ class tests:
 		return lst
 
 	def checkInsert():
-		print("1000 nodes")
 		checkLst = []
 		t = AVLTreeList()
-		for i in range(300):
+		for i in range(1000):
 			index = random.randint(0, len(checkLst))
 			t.insert(index, str(i))
 			checkLst.insert(index, str(i))
@@ -1209,16 +1206,11 @@ class tests:
 
 	def checkDelete():
 		t = tests.checkInsert()
-		print(t.listToArray())
-		tests2.printush(t)
 		checkLst = t.listToArray()
-		for i in range(300):
+		for i in range(20):
 			index = random.randint(0, len(checkLst) - 1)
 			value = t.retrieve(index)
 			# tests2.printush(t)
-			print(t.listToArray())
-			print("len of tree :", t.length())
-			print("deleting: ", index)
 			t.delete(index)
 			checkLst.remove(str(value))
 			curTree = t.listToArray()
@@ -1231,7 +1223,6 @@ class tests:
 			if tests.checkBF(t) != []:
 				print("error in BF after delete index: ", index)
 				print("tree after bad delete: ", curTree)
-				tests2.printush(t)
 				return None
 		# print ("final tree afer", i, "deletions:", curTree)
 		print("delete-well done")
@@ -1274,10 +1265,94 @@ class tests:
 		# print("final tree afer all splits and concats:", currTree)
 		print("split and concat- well done")
 
+	def checkListToArray():
+		t = tests.checkInsert()
+		checkLst = t.listToArray()
+		for i in range(len(checkLst)):
+			val = t.retrieve(i)
+			if val != checkLst[i]:
+				print ("oof")
+			if checkLst[i] != (t.treeSelect( t.getRoot(),i+1)).value:
+				print ("oof2, ", i)
+			if t.search(checkLst[i]) != checkLst.index(checkLst[i]):
+				print("oof3")
+		print("nadir")
 
-tests.checkInsert()
 
-tests.checkDelete()
+tests.checkListToArray()
+"""
+tree = AVLTreeList()
+tests2.insertest(tree)
+# tests2.printush(tree)
+a1 = tree.listToArray()
+print(a1)
+print("a1 len:", len(a1))
+tests2.printush(tree)
+print("a1 first: ", tree.first())
+print("a1 last: ",tree.last())
+tree2 = AVLTreeList()
+tests2.insertest(tree2)
+a2 = tree2.listToArray()
+print(a2)
+print("a2 len:", len(a2))
+tests2.printush(tree2)
+print("a2 first: ",tree2.first())
+print("a2 last: ",tree2.last())
+
+
+
+
+tree.concat(tree2)
+
+# tests2.printush(tree)
+a3 = tree.listToArray()
+print("a3 len:", len(a3))
+tests2.printush(tree)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+print ("is equeal: " , a1+a2 == a3)
+print(tests.checkBF(tree))
+
+tree.delete(tree.length()-1)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+tree.delete(tree.length()-1)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+tree.delete(tree.length()-1)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+tree.delete(tree.length()-1)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+tree.delete(tree.length()-1)
+print("a3 first: ",tree.first())
+print("a3 last: ",tree.last())
+
+
+print(tree.treeSelect(tree.root))
+
+
+
+
+"""
+
+
+
+
+
+
+
+# tests.checkInsert()
+
+# tests.checkDelete()
+
+# tests.checkSplitConcat()
 
 # tree = AVLTreeList()
 # tests2.insertest(tree)
@@ -1296,21 +1371,7 @@ tests.checkDelete()
 
 #tree.delete(0)
 #tests2.printush(tree)
-
-
-
-
-
-
-
-
 """
-def printush(tree):
-	arr = tree.printree(tree)
-	leni = len(arr)
-	for i in range(leni):
-		print(arr[i])
-
 tree = AVLTreeList()
 tree.insert(0, '0')
 tree.insert(1,'1')
@@ -1320,16 +1381,6 @@ tree.insert(4,'4')
 
 printush(tree)
 
-
-
-
-
-tree = AVLTreeList()
-tree.insert(0, '0')
-tree.insert(1,'1')
-tree.insert(2,'2')
-tree.insert(3,'3')
-tree.insert(4,'4')
 
 tree.check()
 arr = tree.printree(tree)
