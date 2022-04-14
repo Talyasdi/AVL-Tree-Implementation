@@ -416,15 +416,16 @@ class AVLTreeList(object):
 		tree1 = AVLTreeList()
 		tree2 = AVLTreeList()
 
-
 		if i == 0:
 			split_node_val = self.min.value
 			self.delete(i)
-			tree2 = self
+			return [tree1, split_node_val, self]
+
 		elif i == self.length()-1:
 			split_node_val =self.max.value
 			self.delete(i)
-			tree1 = self
+			return [self, split_node_val, tree2]
+
 		else:
 			split_node = self.treeSelect(self.getRoot(), i+1)
 			split_node_val = split_node.value
@@ -452,9 +453,9 @@ class AVLTreeList(object):
 			curr_node = split_node.getParent()
 			split_node.setParent(None)
 
-
-
 			while curr_node.isRealNode():
+				curr_parent = curr_node.getParent()
+				next_is_right_child = self.isRightChild(curr_node)
 				if is_right_child:
 					help_tree1 = AVLTreeList()
 					if curr_node.getLeft().isRealNode():
@@ -463,7 +464,9 @@ class AVLTreeList(object):
 						help_tree1.root = curr_node.getLeft()
 					else:
 						curr_node.getLeft().setParent(None)
-					tree1 = help_tree1.join(curr_node,tree1)
+					help_tree1.join(curr_node, tree1)
+					tree1.root = help_tree1.root
+
 				else:
 					help_tree2 = AVLTreeList()
 					if curr_node.getRight().isRealNode():
@@ -472,10 +475,10 @@ class AVLTreeList(object):
 						help_tree2.root = curr_node.getRight()
 					else:
 						curr_node.getRight().setParent(None)
-					tree2 = tree2.join(curr_node,help_tree2)
+					tree2.join(curr_node,help_tree2)
 
-				is_right_child = self.isRightChild(curr_node)
-				curr_node = curr_node.getParent()
+				is_right_child = next_is_right_child
+				curr_node = curr_parent
 
 			curr_node.setRight(None)
 			curr_node.setLeft(None)
@@ -484,7 +487,7 @@ class AVLTreeList(object):
 			tree2.min = min_tree2
 			tree2.max = max_tree2
 
-			return [tree1,split_node_val, tree2]
+		return [tree1,split_node_val, tree2]
 
 
 	"""concatenates lst to self
@@ -496,16 +499,24 @@ class AVLTreeList(object):
 	"""
 
 	def concat(self, lst):
+		new_min = self.min
+
+		if self.empty():
+			self.root = lst.root
+			self.min = lst.min
+			self.max = lst.max
+			return lst.length()
+
+		if lst.empty():
+			return self.length()
+
 		new_max = lst.max
 		height_diff = abs(self.getRoot().getHeight() - lst.getRoot().getHeight())
 		max_node = self.max
 		self.delete(self.length()-1)
-		joined_tree = self.join(max_node, lst)
-		self.root = joined_tree.getRoot()
+		self.join(max_node, lst)
 		self.max = new_max
-		# lst.root = None
-		# lst.min = None
-		# lst.max = None
+		self.min = new_min
 		return height_diff
 
 
@@ -619,12 +630,7 @@ class AVLTreeList(object):
 
 	def rotateAndFix(self, node):  # Complexity
 		node_bf = self.balanceFactor(node)
-		"""
-		if isRightCase:
-			child_bf = self.balanceFactor(node.getRight())
-		else:
-			child_bf = self.balanceFactor(node.getLeft())
-		"""
+
 		if node_bf == 2:
 			left_child_bf = self.balanceFactor(node.getLeft())
 
@@ -826,38 +832,47 @@ class AVLTreeList(object):
 					"""
 
 	def join(self, connecting_node, tree):  # Complexity
-		return_tree = AVLTreeList()
-
+		tree_is_bigger = False
 		# if two trees have the same height
 		if self.getRoot().getHeight() == tree.getRoot().getHeight():
 			connecting_node.setLeft(self.getRoot())
 			connecting_node.setRight(tree.getRoot())
+			if not (self.empty() and tree.empty()):
+				connecting_node.setParent(self.root.getParent())
+				if self.isRightChild(self.root):
+					self.root.getParent().setRight(connecting_node)
+				else:
+					self.root.getParent().setLeft(connecting_node)
+			else:
+				virtual = AVLNode("None")
+				connecting_node.setParent(virtual)
+				virtual.setLeft(connecting_node)
 			self.getRoot().setParent(connecting_node)
 			tree.getRoot().setParent(connecting_node)
-			connecting_node.setParent(return_tree.getRoot())
-			return_tree.getRoot().setLeft(connecting_node)
-			return_tree.root = connecting_node
-			return_tree.updateSize(return_tree.getRoot())
-			return_tree.updateHeight(return_tree.getRoot())
+
+			self.root = connecting_node
+			self.updateSize(self.getRoot())
+			self.updateHeight(self.getRoot())
 
 		else:
 			if self.getRoot().getHeight() > tree.getRoot().getHeight():
-				higher_tree = self
 				lower_tree_height = tree.getRoot().getHeight()
 
 				# linking connecting_node to shorter tree
-
 				connecting_node.setRight(tree.getRoot())
 				if not tree.empty():
+
+					"""
 					if tree.isRightChild(tree.getRoot()):
 						tree.getRoot().getParent().setRight(None)
 					else:
 						tree.getRoot().getParent().setLeft(None)
+					"""
 				tree.getRoot().setParent(connecting_node)
 
 				# finding the left child of connecting_node
-				curr_node = higher_tree.getRoot()
-				while curr_node.getHeight() > lower_tree_height:
+				curr_node = self.getRoot()
+				while curr_node.getHeight() > lower_tree_height :
 					curr_node = curr_node.getRight()
 
 				# linking connecting_node to higher tree
@@ -865,21 +880,25 @@ class AVLTreeList(object):
 				curr_node.getParent().setRight(connecting_node)
 				connecting_node.setLeft(curr_node)
 				curr_node.setParent(connecting_node)
+
 			else:
-				higher_tree = tree
 				lower_tree_height = self.getRoot().getHeight()
 
+				tree_is_bigger = True
 				# linking connecting_node to shorter tree
 				connecting_node.setLeft(self.getRoot())
 				if not self.empty():
+
+					"""
 					if self.isRightChild(self.getRoot()):
 						self.getRoot().getParent().setRight(None)
 					else:
 						self.getRoot().getParent().setLeft(None)
+					"""
 				self.getRoot().setParent(connecting_node)
 
 				# finding the right child of connecting_node
-				curr_node = higher_tree.getRoot()
+				curr_node = tree.getRoot()
 				while curr_node.getHeight() > lower_tree_height:
 					curr_node = curr_node.getLeft()
 
@@ -904,16 +923,19 @@ class AVLTreeList(object):
 					parent_node.setHeight(curr_new_height)
 					parent_node = parent_node.parent
 				elif abs(bf_parent_node) == 2:
-					higher_tree.rotateAndFix(parent_node)
-					parent_node = parent_node.parent
+					if tree_is_bigger:
+						tree.rotateAndFix(parent_node)
+					else:
+						self.rotateAndFix(parent_node)
+					parent_node = parent_node.parent.parent
 
 			while parent_node.isRealNode():
-				higher_tree.updateSize(parent_node)
+				self.updateSize(parent_node)
 				parent_node = parent_node.parent
 
-			return_tree.root = higher_tree.root
+			if tree_is_bigger:
+				self.root = tree.root
 
-		return return_tree
 
 	##################################### inside AVLTreeList class ######################################
 	"""Checks if the AVL tree properties are consistent
@@ -1133,8 +1155,8 @@ class AVLTreeList(object):
 
 class tests2:
 	@staticmethod
-	def insertest(tree):
-		for i in range(50):
+	def insertest(tree, size):
+		for i in range(size):
 			index = random.randint(0, tree.length())
 			tree.insert(index, str(index))
 
@@ -1184,7 +1206,7 @@ class tests:
 	def checkInsert():
 		checkLst = []
 		t = AVLTreeList()
-		for i in range(1000):
+		for i in range(1000000):
 			index = random.randint(0, len(checkLst))
 			t.insert(index, str(i))
 			checkLst.insert(index, str(i))
@@ -1207,7 +1229,7 @@ class tests:
 	def checkDelete():
 		t = tests.checkInsert()
 		checkLst = t.listToArray()
-		for i in range(20):
+		for i in range(1000000):
 			index = random.randint(0, len(checkLst) - 1)
 			value = t.retrieve(index)
 			# tests2.printush(t)
@@ -1233,11 +1255,21 @@ class tests:
 		# print("in order: ", checkLst, "pre order: ", t.listToArrayPreOrd() )
 		while t.length() > 0:
 			index = random.randint(0, t.length() - 1)
+			# print("spliting:")
 			# print("splitting by: ", index)
+			# print(t.listToArray())
 			ret = t.split(index)
+			# print("tree after spliring:")
+			# tests2.printush(ret[0])
+			# tests2.printush(ret[2])
 			checkLst1 = checkLst[:index]
 			checkLst2 = checkLst[index + 1:]
+
 			# print(AVLTreeList.listToArray(ret[0]), AVLTreeList.listToArray(ret[2]))
+			# print("t1 min: " , (ret[0].min).value)
+			# print("t1 max: ", (ret[0].max).value)
+			# print("t2 min: ", (ret[2].min).value)
+			# print("t2 max: ", (ret[2].max).value)
 			if AVLTreeList.listToArray(ret[0]) != checkLst1 or AVLTreeList.listToArray(ret[2]) != checkLst2:
 				print("error inorder after split by index: ", index)
 				print("tree after bad split: ", ret[0], ret[2])
@@ -1250,6 +1282,8 @@ class tests:
 			checkLst = checkLst1 + checkLst2
 			AVLTreeList.concat(ret[0], ret[2])
 			t = ret[0]
+			# print("tree after concating:")
+			# tests2.printush(t)
 			currTree = t.listToArray()
 			# print (currTree)
 			if currTree != checkLst:
@@ -1278,12 +1312,79 @@ class tests:
 				print("oof3")
 		print("nadir")
 
+tree = AVLTreeList()
+tests2.insertest(tree, 1000000)
 
-tests.checkListToArray()
+# tests.checkInsert()
+# tests.checkDelete()
+# tests.checkSplitConcat()
+# tests.checkListToArray()
+
 """
 tree = AVLTreeList()
-tests2.insertest(tree)
+tests2.insertest(tree, 35)
+tests2.printush(tree)
+print(tree.listToArray())
+
+listaftersplit = tree.split(34)
+
+print("******************************************************************************")
+print("****************************tree 1 after split: ***************************")
+
+print(listaftersplit[0].listToArray())
+
+
+print("******************************************************************************")
+print("****************************tree 2 after split: ***************************")
+
+print(listaftersplit[2].listToArray())
+
+
+print("******************************************************************************")
+print("****************************and split node is: ***************************")
+
+print(listaftersplit[1])
+
+
+
+
+print("******************************************************************************")
+print("****************************tree1***************************")
+tree = AVLTreeList()
+tests2.insertest(tree, 20)
+print(tree.listToArray())
 # tests2.printush(tree)
+
+print("******************************************************************************")
+print("****************************tree2***************************")
+
+tree2 = AVLTreeList()
+tests2.insertest(tree2, 15)
+print(tree2.listToArray())
+
+# tests2.printush(tree2)
+
+tree.concat(tree2)
+
+print("******************************************************************************")
+print("****************************tree after concat: ***************************")
+
+print(tree.listToArray())
+
+listaftersplit = tree.split(5)
+
+print("******************************************************************************")
+print("****************************tree 1 after split: ***************************")
+
+# print(listaftersplit[0].listToArray())
+
+
+print("******************************************************************************")
+print("****************************tree 2 after split: ***************************")
+
+# print(listaftersplit[2].listToArray())
+
+
 a1 = tree.listToArray()
 print(a1)
 print("a1 len:", len(a1))
