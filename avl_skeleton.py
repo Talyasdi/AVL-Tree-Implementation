@@ -1,9 +1,3 @@
-#username - Talyasdi
-#id1      - 206962359
-#name1    - Tal Yasdi
-#id2      - 207188285
-#name2    - Meital Shpigel
-
 
 """A class represnting a node in an AVL tree"""
 
