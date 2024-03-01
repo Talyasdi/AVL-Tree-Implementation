@@ -3,6 +3,7 @@
 ## Overview
 
 This repository contains a Python implementation of an AVL (Adelson-Velsky and Landis) tree, a self-balancing binary search tree. The code provides various AVL tree operations, including rotations, size and height updates, node deletion, and tree joining.
+The project is part of "Data Structures" course.
 
 ## Code Structure
 
