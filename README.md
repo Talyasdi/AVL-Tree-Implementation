@@ -20,10 +20,6 @@ The code is organized into a class `AVLTree` with several methods for AVL tree o
 
 - **Joining Trees:** The `join` method merges two AVL trees with a connecting node.
 
-## Comments and Documentation
-
-The code includes comments explaining each method's purpose. This aids in understanding the implementation.
-
 ## Complexity Analysis
 
 The code provides complexity analysis for some methods, helping to assess the efficiency of the implementation.
